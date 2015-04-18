@@ -1,19 +1,32 @@
 #!/usr/bin/env php
 <?php
 
-require_once __DIR__ . '/../vendor/autoload.php';
+foreach (['/../../autoload.php', '/../vendor/autoload.php', '/vendor/autoload.php'] as $file) {
+    if (file_exists(__DIR__ . '/..' . $file)) {
+		require __DIR__ . '/..' . $file;
+        break;
+    }
+}
 
-if (!file_exists('db.ini')) {
+$opts = getopt('nit:c:');
+if (!isset($opts['c'])) {
+	$opts['c'] = 'db.ini';
+}
+
+if (!file_exists($opts['c'])) {
 	echo 'Configuration file not found! Please create db.ini', "\n";
 	exit(1);
 }
 
-$config = parse_ini_file('db.ini');
+$hasConfigFailure = false;
+$config = parse_ini_file($opts['c']);
 foreach (['host', 'dbname', 'username', 'changesetPath'] as $param) {
 	if (empty($config[$param])) {
 		echo 'Required configuration paramter not set: ', $param, "\n";
+		$hasConfigFailure = true;
 	} elseif ($param === 'changesetPath' && !is_dir(realpath($config['changesetPath']))) {
 		echo 'Changeset path invalid';
+		$hasConfigFailure = true;
 	}
 }
 if ($hasConfigFailure) {
@@ -33,7 +46,11 @@ $changeManager = new \DbVcs\ChangeManager(
 	new \DbVcs\Output()
 );
 
-$opts = getopt('nit:');
+// Force interactive mode on always
+if (!empty($config['interactive'])) {
+	$opts['i'] = true;
+}
+
 if (isset($opts['s'])) {
 	$changeManager->showState();
 } elseif (isset($opts['t'])) {
@@ -46,11 +63,12 @@ if (isset($opts['s'])) {
 	$changeManager->upgradeTo($targetVersion);
 } else {
 		echo <<<USAGE
-{$argv[0]} [-s] [-n | -i] [-t [version]]
+{$argv[0]} [-s] [-n | -i] [-t [version]] [-c db.ini]
   -n           Run as normal but perform no modifying operations against the database.
   -i           Provide interactive confirmation prompts before applying changes.
   -t version   Specify new version to target upgrade to
   -s           Display the current version of the database
+  -c file      Specify the db config file to use
 
 
 USAGE;
