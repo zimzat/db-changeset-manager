@@ -1,20 +1,25 @@
 {
-    "name": "zimzat/db-changeset-manager",
-    "description": "Automate the process of applying SQL files (changesets) to databases of different environments or users.",
-    "license": "MIT",
+	"name": "zimzat/db-changeset-manager",
+	"description": "Automate the process of applying SQL files (changesets) to databases of different environments or users.",
+	"license": "MIT",
 	"bin": [
 		"bin/dbChangeManager.php"
 	],
-    "authors": [
-        {
-            "name": "Zimzat",
-            "email": "zimzat@zimzat.com"
-        }
-    ],
-    "require": {
-        "ext-PDO": "1.0.4dev",
-        "ext-pdo_mysql": "~1.0"
-    },
+	"repositories": [
+		{
+			"packagist": false
+		}
+	],
+	"authors": [
+		{
+			"name": "Zimzat",
+			"email": "zimzat@zimzat.com"
+		}
+	],
+	"require": {
+		"ext-PDO": "1.0.4dev",
+		"ext-pdo_mysql": "~1.0"
+	},
 	"autoload": {
 		"psr-4": {
 			"DbVcs\\": "src/"
