@@ -14,7 +14,7 @@ if (!isset($opts['c'])) {
 }
 
 if (!file_exists($opts['c'])) {
-	echo 'Configuration file not found! Please create db.ini', "\n";
+	echo 'Configuration file not found! Please check that [', $opts['c'], '] exists or create it', "\n";
 	exit(1);
 }
 
