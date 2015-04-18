@@ -67,7 +67,7 @@ changesetPath = changesets
 
 The available commands, which can also be seen by running the command without any options, are:
 ```
-php ./bin/db.php [-s] [-n | -i] [-t [version]] [-c db.ini]
+./dbChangeManager.php [-s] [-n | -i] [-t [version]] [-c db.ini]
   -n           Run as normal but perform no modifying operations against the database.
   -i           Provide interactive confirmation prompts before applying changes.
   -t version   Specify new version to target upgrade to
