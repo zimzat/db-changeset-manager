@@ -6,15 +6,27 @@ class ChangeManager {
 	protected $noOp = false;
 	protected $interactive = false;
 
+	protected $changesetPath;
+
 	/** @var \PDO */
 	protected $db;
 
-	/** @var Log */
+	/** @var Output */
 	protected $log;
 
-	public function __construct(\PDO $db, Log $log) {
+	/**
+	 * @param string $changesetPath Path to directory containing version numbers.
+	 * @param \PDO $db
+	 * @param \DbVcs\Output $log
+	 */
+	public function __construct($changesetPath, \PDO $db, Output $log) {
+		$this->changesetPath = $changesetPath;
 		$this->db = $db;
 		$this->log = $log;
+
+		if (!is_dir($this->changesetPath)) {
+			throw new \InvalidArgumentException('Invalid changeset path provided.');
+		}
 	}
 
 	public function setNoOperation($noOp = true) {
@@ -35,7 +47,7 @@ class ChangeManager {
 	}
 
 	public function init() {
-		$this->db->query(file_get_contents(__DIR__ . '/init.sql'));
+		$this->db->query(file_get_contents(__DIR__ . '/../init.sql'));
 	}
 
 	public function showState() {
@@ -98,7 +110,7 @@ class ChangeManager {
 
 	protected function getAvailableSets() {
 		$changes = [];
-		foreach (glob('changesets/*/*.sql') as $path) {
+		foreach (glob($this->changesetPath . '/*/*.sql') as $path) {
 			list($tmp, $version, $file) = explode(DIRECTORY_SEPARATOR, $path);
 			$changes[ltrim($version, 'v')][] = $file;
 		}
@@ -115,7 +127,7 @@ class ChangeManager {
 		foreach ($changes as $file) {
 			$this->log->notice('Applying changeset: v' . $version . '/' . $file);
 			if (!$this->noOp) {
-				!$this->checkInteractive('Apply changeset to database?') || $this->db->exec(file_get_contents(__DIR__ . '/changesets/v' . $version . '/' . $file));
+				!$this->checkInteractive('Apply changeset to database?') || $this->db->exec(file_get_contents($this->changesetPath . '/v' . $version . '/' . $file));
 				!$this->checkInteractive('Mark changeset as applied?') || $this->db->prepare('INSERT INTO _metaChange (name) VALUES (?)')->execute([$file]);
 			}
 		}

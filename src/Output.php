@@ -2,7 +2,7 @@
 
 namespace DbVcs;
 
-class Log {
+class Output {
 	public function notice($message) {
 		echo $message, "\n";
 	}

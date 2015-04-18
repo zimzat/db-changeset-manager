@@ -3,12 +3,34 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+if (!file_exists('db.ini')) {
+	echo 'Configuration file not found! Please create db.ini', "\n";
+	exit(1);
+}
+
+$config = parse_ini_file('db.ini');
+foreach (['host', 'dbname', 'username', 'changesetPath'] as $param) {
+	if (empty($config[$param])) {
+		echo 'Required configuration paramter not set: ', $param, "\n";
+	} elseif ($param === 'changesetPath' && !is_dir(realpath($config['changesetPath']))) {
+		echo 'Changeset path invalid';
+	}
+}
+if ($hasConfigFailure) {
+	exit(1);
+}
+
 $changeManager = new \DbVcs\ChangeManager(
-	new \PDO('mysql:host=localhost;dbname=test', 'root', null, [
-		\PDO::ATTR_EMULATE_PREPARES => false,
-		\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-	]),
-	new \DbVcs\Log()
+	realpath($config['changesetPath']),
+	new \PDO(
+		'mysql:host=' . $config['host'] . ';dbname=' . $config['dbname'],
+		$config['username'],
+		isset($config['password']) ? $config['password'] : null, [
+			\PDO::ATTR_EMULATE_PREPARES => false,
+			\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+		]
+	),
+	new \DbVcs\Output()
 );
 
 $opts = getopt('nit:');

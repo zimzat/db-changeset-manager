@@ -2,6 +2,9 @@
     "name": "zimzat/db-changeset-manager",
     "description": "Automate the process of applying SQL files (changesets) to databases of different environments or users.",
     "license": "MIT",
+	"bin": [
+		"bin/dbChangeManager.php"
+	],
     "authors": [
         {
             "name": "Zimzat",
