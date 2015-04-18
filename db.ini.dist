@@ -1,0 +1,5 @@
+
+host = localhost
+dbname = test
+username = root
+changesetPath = changesets
