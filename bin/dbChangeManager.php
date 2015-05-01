@@ -1,6 +1,19 @@
 #!/usr/bin/env php
 <?php
 
+function showUsage() {
+	return <<<USAGE
+{$GLOBALS['argv'][0]} [-s] [-n | -i] [-t [version]] [-c db.ini]
+  -n           Run as normal but perform no modifying operations against the database.
+  -i           Provide interactive confirmation prompts before applying changes.
+  -t version   Specify new version to target upgrade to
+  -s           Display the current version of the database
+  -c file      Specify the db config file to use, defaults to db.ini
+
+
+USAGE;
+}
+
 foreach (['/../../autoload.php', '/../vendor/autoload.php', '/vendor/autoload.php'] as $file) {
     if (file_exists(__DIR__ . '/..' . $file)) {
 		require __DIR__ . '/..' . $file;
@@ -8,13 +21,19 @@ foreach (['/../../autoload.php', '/../vendor/autoload.php', '/vendor/autoload.ph
     }
 }
 
-$opts = getopt('nit:c:');
+$opts = getopt('hnit:c:');
+if (isset($opts['h']) || empty($opts)) {
+	echo showUsage();
+	exit;
+}
+
 if (!isset($opts['c'])) {
 	$opts['c'] = 'db.ini';
 }
 
 if (!file_exists($opts['c'])) {
 	echo 'Configuration file not found! Please check that [', $opts['c'], '] exists or create it', "\n";
+	echo "\n", showUsage();
 	exit(1);
 }
 
@@ -25,11 +44,12 @@ foreach (['host', 'dbname', 'username', 'changesetPath'] as $param) {
 		echo 'Required configuration paramter not set: ', $param, "\n";
 		$hasConfigFailure = true;
 	} elseif ($param === 'changesetPath' && !is_dir(realpath($config['changesetPath']))) {
-		echo 'Changeset path invalid';
+		echo 'Changeset path invalid', "\n";
 		$hasConfigFailure = true;
 	}
 }
 if ($hasConfigFailure) {
+	echo "\n", showUsage();
 	exit(1);
 }
 
@@ -62,15 +82,6 @@ if (isset($opts['s'])) {
 	$targetVersion = ($opts['t'] !== false) ? $opts['t'] : null;
 	$changeManager->upgradeTo($targetVersion);
 } else {
-		echo <<<USAGE
-{$argv[0]} [-s] [-n | -i] [-t [version]] [-c db.ini]
-  -n           Run as normal but perform no modifying operations against the database.
-  -i           Provide interactive confirmation prompts before applying changes.
-  -t version   Specify new version to target upgrade to
-  -s           Display the current version of the database
-  -c file      Specify the db config file to use
-
-
-USAGE;
+	echo showUsage();
 	$changeManager->showState();
 }
