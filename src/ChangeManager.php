@@ -54,8 +54,7 @@ class ChangeManager {
 		try {
 			$version = $this->getCurrentVersion();
 		} catch (\Exception $e) {
-			$this->log('Uninitialized');
-			return;
+			$version = null;
 		}
 
 		$this->log->notice('Version: ' . $version ?: 'Uninitialized');
@@ -64,7 +63,11 @@ class ChangeManager {
 	}
 
 	public function upgradeTo($targetVersion) {
-		$currentVersion = $this->getCurrentVersion();
+		try {
+			$currentVersion = $this->getCurrentVersion();
+		} catch (\Exception $ex) {
+			$this->noOp || !$this->checkInteractive('Create database meta tables for tracking?') || $this->init();
+		}
 		$lastVersion = 0;
 
 		if ($targetVersion === null) {
@@ -109,9 +112,11 @@ class ChangeManager {
 	}
 
 	protected function getAvailableSets() {
+		$pathPrefixLength = strlen($this->changesetPath);
+
 		$changes = [];
 		foreach (glob($this->changesetPath . '/*/*.sql') as $path) {
-			list($tmp, $version, $file) = explode(DIRECTORY_SEPARATOR, $path);
+			list($tmp, $version, $file) = explode(DIRECTORY_SEPARATOR, substr($path, $pathPrefixLength));
 			$changes[ltrim($version, 'v')][] = $file;
 		}
 
