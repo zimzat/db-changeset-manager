@@ -30,7 +30,7 @@ Changes are applied to the database in order of version number and then sorted n
 
 Directories must be prefixed with 'v' but otherwise follows the standard set out by [version_compare()](http://php.net/version_compare).
 
-Files must be suffixed with `.sql` but otherwise can be named anything. A natural sort (1 before 10) is done to the list of files before being applied to the database.
+Files must be suffixed with `.sql` and must be uniquely named between all versions but otherwise can be named anything. A natural sort (2 before 10) is done to the list of files before being applied to the database.
 
 Requirements
 ====
@@ -72,7 +72,7 @@ The available commands, which can also be seen by running the command without an
   -i           Provide interactive confirmation prompts before applying changes.
   -t version   Specify new version to target upgrade to
   -s           Display the current version of the database
-  -c file      Specify the db config file to use
+  -c file      Specify the db config file to use, defaults to db.ini
 ```
 
 PHP Usage
