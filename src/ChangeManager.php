@@ -47,7 +47,7 @@ class ChangeManager {
 	}
 
 	public function init() {
-		$this->db->query(file_get_contents(__DIR__ . '/../init.sql'));
+		$this->db->exec(file_get_contents(__DIR__ . '/../init.sql'));
 	}
 
 	public function showState() {
@@ -67,6 +67,7 @@ class ChangeManager {
 			$currentVersion = $this->getCurrentVersion();
 		} catch (\Exception $ex) {
 			$this->noOp || !$this->checkInteractive('Create database meta tables for tracking?') || $this->init();
+			$currentVersion = 0;
 		}
 		$lastVersion = 0;
 
