@@ -12,7 +12,7 @@ class ChangeManager {
 	protected $db;
 
 	/** @var Output */
-	protected $log;
+	protected $output;
 
 	/**
 	 * @param string $changesetPath Path to directory containing version numbers.
@@ -22,7 +22,7 @@ class ChangeManager {
 	public function __construct($changesetPath, \PDO $db, Output $log) {
 		$this->changesetPath = $changesetPath;
 		$this->db = $db;
-		$this->log = $log;
+		$this->output = $log;
 
 		if (!is_dir($this->changesetPath)) {
 			throw new \InvalidArgumentException('Invalid changeset path provided.');
@@ -30,18 +30,18 @@ class ChangeManager {
 	}
 
 	public function setNoOperation($noOp = true) {
-		$this->log->notice('Write Operations ' . ($noOp ? 'Disabled' : 'Enabled'));
+		$this->output->notice('Write Operations ' . ($noOp ? 'Disabled' : 'Enabled'));
 		$this->noOp = (bool)$noOp;
 	}
 
 	public function setInteractive($interactive = true) {
-		$this->log->notice('Interactive Mode ' . ($interactive ? 'Enabled' : 'Disabled'));
+		$this->output->notice('Interactive Mode ' . ($interactive ? 'Enabled' : 'Disabled'));
 		$this->interactive = $interactive;
 	}
 
 	public function checkInteractive($prompt) {
 		if ($this->interactive) {
-			return in_array(readline("\t" . $prompt . ' [yN] '), ['y', 'Y'], true);
+			return in_array($this->output->prompt("\t" . $prompt . ' [yN] '), ['y', 'Y'], true);
 		}
 		return true;
 	}
@@ -57,7 +57,7 @@ class ChangeManager {
 			$version = null;
 		}
 
-		$this->log->notice('Version: ' . $version ?: 'Uninitialized');
+		$this->output->notice('Version: ' . $version ?: 'Uninitialized');
 
 		return $this;
 	}
@@ -73,9 +73,9 @@ class ChangeManager {
 
 		if ($targetVersion === null) {
 			$targetVersion = $currentVersion;
-			$this->log->notice('Checking for unapplied changes up to the current version [' . $currentVersion . ']');
+			$this->output->notice('Checking for unapplied changes up to the current version [' . $currentVersion . ']');
 		} else {
-			$this->log->notice('Checking for unapplied changes between current version [' . $currentVersion . '] and requested target version [' . $targetVersion . ']');
+			$this->output->notice('Checking for unapplied changes between current version [' . $currentVersion . '] and requested target version [' . $targetVersion . ']');
 		}
 
 		$available = $this->getAvailableSets();
@@ -89,7 +89,7 @@ class ChangeManager {
 			$unapplied = array_diff($changes, $applied);
 
 			if (!empty($unapplied)) {
-				$this->log->notice('Found unapplied changes in v' . $version);
+				$this->output->notice('Found unapplied changes in v' . $version);
 				$this->applyChanges($version, $unapplied);
 			}
 
@@ -97,7 +97,7 @@ class ChangeManager {
 		}
 
 		if (version_compare($currentVersion, $lastVersion) < 0) {
-			$this->log->notice('Updating current version to [' . $lastVersion . ']');
+			$this->output->notice('Updating current version to [' . $lastVersion . ']');
 			$this->noOp || !$this->checkInteractive('Upgrade current version?') || $this->db->prepare('UPDATE _metaVersion SET currentVersion = ?')->execute([$lastVersion]);
 		}
 
@@ -131,7 +131,7 @@ class ChangeManager {
 
 	protected function applyChanges($version, $changes) {
 		foreach ($changes as $file) {
-			$this->log->notice('Applying changeset: v' . $version . '/' . $file);
+			$this->output->notice('Applying changeset: v' . $version . '/' . $file);
 			if (!$this->noOp) {
 				!$this->checkInteractive('Apply changeset to database?') || $this->db->exec(file_get_contents($this->changesetPath . '/v' . $version . '/' . $file));
 				!$this->checkInteractive('Mark changeset as applied?') || $this->db->prepare('INSERT INTO _metaChange (name) VALUES (?)')->execute([$file]);
