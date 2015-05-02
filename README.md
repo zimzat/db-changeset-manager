@@ -3,7 +3,9 @@
 Automate the process of applying SQL files (changesets) to databases of different environments or users.
 
 Create versioned directories where developers can drop SQL files to be applied to other environments through the release
-process and back to other developers to ensure that everyone stays synced with database changes.
+process and back to other developers to ensure that everyone stays synced with database changes. This project doesn't try
+to force specific syntax, verbose declarations, or provide automated conflict resolution or detection; just a simple
+process of applying changes between environments.
 
 A typical changeset directory would look something like this:
 ```
