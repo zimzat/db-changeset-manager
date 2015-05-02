@@ -2,5 +2,5 @@
 host = localhost
 dbname = test
 username = root
-password = secret
+; password = secret
 changesetPath = changesets

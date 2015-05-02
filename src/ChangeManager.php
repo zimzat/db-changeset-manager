@@ -3,10 +3,10 @@
 namespace DbVcs;
 
 class ChangeManager {
-	protected $noOp = false;
-	protected $interactive = false;
-
 	protected $changesetPath;
+
+	/** @var Processor */
+	protected $processor;
 
 	/** @var \PDO */
 	protected $db;
@@ -19,9 +19,10 @@ class ChangeManager {
 	 * @param \PDO $db
 	 * @param \DbVcs\Output $log
 	 */
-	public function __construct($changesetPath, \PDO $db, Output $log) {
+	public function __construct($changesetPath, \PDO $db, Processor $processor, Output $log) {
 		$this->changesetPath = $changesetPath;
 		$this->db = $db;
+		$this->processor = $processor;
 		$this->output = $log;
 
 		if (!is_dir($this->changesetPath)) {
@@ -29,25 +30,8 @@ class ChangeManager {
 		}
 	}
 
-	public function setNoOperation($noOp = true) {
-		$this->output->notice('Write Operations ' . ($noOp ? 'Disabled' : 'Enabled'));
-		$this->noOp = (bool)$noOp;
-	}
-
-	public function setInteractive($interactive = true) {
-		$this->output->notice('Interactive Mode ' . ($interactive ? 'Enabled' : 'Disabled'));
-		$this->interactive = $interactive;
-	}
-
-	public function checkInteractive($prompt) {
-		if ($this->interactive) {
-			return in_array($this->output->prompt("\t" . $prompt . ' [yN] '), ['y', 'Y'], true);
-		}
-		return true;
-	}
-
 	public function init() {
-		$this->db->exec(file_get_contents(__DIR__ . '/../init.sql'));
+		$this->processor->createMeta(__DIR__ . '/../init.sql');
 	}
 
 	public function showState() {
@@ -66,7 +50,7 @@ class ChangeManager {
 		try {
 			$currentVersion = $this->getCurrentVersion();
 		} catch (\Exception $ex) {
-			$this->noOp || !$this->checkInteractive('Create database meta tables for tracking?') || $this->init();
+			$this->init();
 			$currentVersion = 0;
 		}
 		$lastVersion = 0;
@@ -98,7 +82,7 @@ class ChangeManager {
 
 		if (version_compare($currentVersion, $lastVersion) < 0) {
 			$this->output->notice('Updating current version to [' . $lastVersion . ']');
-			$this->noOp || !$this->checkInteractive('Upgrade current version?') || $this->db->prepare('UPDATE _metaVersion SET currentVersion = ?')->execute([$lastVersion]);
+			$this->processor->metaVersion('UPDATE _metaVersion SET currentVersion = ?', $lastVersion);
 		}
 
 		return $this;
@@ -132,10 +116,8 @@ class ChangeManager {
 	protected function applyChanges($version, $changes) {
 		foreach ($changes as $file) {
 			$this->output->notice('Applying changeset: v' . $version . '/' . $file);
-			if (!$this->noOp) {
-				!$this->checkInteractive('Apply changeset to database?') || $this->db->exec(file_get_contents($this->changesetPath . '/v' . $version . '/' . $file));
-				!$this->checkInteractive('Mark changeset as applied?') || $this->db->prepare('INSERT INTO _metaChange (name) VALUES (?)')->execute([$file]);
-			}
+			$this->processor->applyFile($this->changesetPath . '/v' . $version . '/' . $file);
+			$this->processor->metaChange('INSERT INTO _metaChange (name) VALUES (?)', $file);
 		}
 	}
 }

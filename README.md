@@ -62,23 +62,37 @@ The command line tool expects a configuration file to be defined specifying the 
 host = localhost
 dbname = test
 username = root
+; password = secret
 changesetPath = changesets
 ```
 
 The available commands, which can also be seen by running the command without any options, are:
 ```
-./dbChangeManager.php [-s] [-n | -i] [-t [version]] [-c db.ini]
-  -n           Run as normal but perform no modifying operations against the database.
-  -i           Provide interactive confirmation prompts before applying changes.
-  -t version   Specify new version to target upgrade to
+./bin/dbChangeManager.php -h
+./bin/dbChangeManager.php -s [-c db.ini]
+./bin/dbChangeManager.php -t <version> [-a | -n | -i | -o <file>] [-c db.ini]
+
+Specify an action:
+  -h           Display this help message.
   -s           Display the current version of the database
+  -t version   Specify new version to target upgrade to
+
+Set a run mode:
+  -a           Apply: Execute all changesets and tracking against the database immediately
+  -n           No Op: Run as normal but perform no modifying operations against the database.
+  -i           Interactive: Provide interactive confirmation prompts before applying changes.
+  -o file      File: Output all SQL commands to a file which can be run separately.
+
+Other options:
   -c file      Specify the db config file to use, defaults to db.ini
+
 ```
 
 PHP Usage
 =====
 
 The utility can also be invoked directly from a PHP script by instantiating the \DbVcs\ChangeManager object with its dependencies.
+
 ```
 $changeManager = new \DbVcs\ChangeManager(
 	'changesets',
@@ -90,10 +104,9 @@ $changeManager = new \DbVcs\ChangeManager(
 			\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
 		]
 	),
+	new \DbVcs\Processor\NoOp(),
 	new \DbVcs\Output()
 );
 ```
 
-Note: The \DbVcs\Output class should be extended to send results where desired (log file, browser, database, etc).
-
-Note: Interactive mode should not be enabled unless the host script is also run from the command line.
+Note: The \DbVcs\Output class should be extended to send results where and how desired (log file, browser, database, etc).
