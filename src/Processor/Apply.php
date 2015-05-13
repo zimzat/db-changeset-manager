@@ -18,6 +18,10 @@ class Apply implements \DbVcs\Processor {
 		$this->db->exec(file_get_contents($file));
 	}
 
+	public function upgradeMeta($sql, $description) {
+		$this->db->exec($sql);
+	}
+
 	public function metaChange($sql, $changeset) {
 		$this->db->prepare($sql)->execute([$changeset]);
 	}

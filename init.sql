@@ -1,6 +1,7 @@
 
 CREATE TABLE IF NOT EXISTS _metaVersion (
-	currentVersion VARCHAR(8) NOT NULL PRIMARY KEY
+	currentVersion VARCHAR(8) NOT NULL PRIMARY KEY,
+	isLocked BOOLEAN NOT NULL DEFAULT FALSE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO _metaVersion VALUES ('0');
@@ -11,3 +12,5 @@ CREATE TABLE IF NOT EXISTS _metaChange (
 	dateApplied TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	UNIQUE INDEX `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO _metaChange (name) VALUES ('_metaVersion.isLocked');

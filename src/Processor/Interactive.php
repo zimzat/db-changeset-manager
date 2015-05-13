@@ -23,6 +23,12 @@ class Interactive extends Apply implements \DbVcs\Processor {
 		}
 	}
 
+	public function upgradeMeta($sql, $description) {
+		if ($this->checkInteractive('Upgrade meta tracking with: ' . $description . '?')) {
+			parent::upgradeMeta($sql, $description);
+		}
+	}
+
 	public function metaChange($sql, $changeset) {
 		if ($this->checkInteractive('Mark changeset as applied?')) {
 			parent::metaChange($sql, $changeset);

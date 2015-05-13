@@ -16,6 +16,10 @@ class File implements \DbVcs\Processor {
 		$this->fwrite('# Creating meta tracking tables' . "\n" . file_get_contents($file));
 	}
 
+	public function upgradeMeta($sql, $description) {
+		$this->fwrite('# Upgrading meta tracking tables for: ' . $description . "\n" . $sql);
+	}
+
 	public function metaChange($sql, $changeset) {
 		$this->fwrite('# Adding changeset to meta' . "\n" . str_replace('?', "'" . addslashes($changeset) . "'", $sql));
 	}

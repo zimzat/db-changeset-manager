@@ -53,8 +53,26 @@ class ChangeManager {
 			$this->init();
 			$currentVersion = 0;
 		}
-		$lastVersion = 0;
 
+		try {
+			if (!$this->lockDatabase()) {
+				return $this;
+			}
+		} catch (Exception $ex) {
+			// If the lock fails with an exception then the database /probably/ needs the lock meta upgrade;
+			$this->upgradeMeta();
+			if (!$this->lockDatabase()) {
+				return $this;
+			}
+		}
+		$this->upgradeMeta();
+		$this->doUpgrades($targetVersion, $currentVersion);
+		$this->unlockDatabase();
+
+		return $this;
+	}
+
+	protected function doUpgrades($targetVersion, $currentVersion) {
 		if ($targetVersion === null) {
 			$targetVersion = $currentVersion;
 			$this->output->notice('Checking for unapplied changes up to the current version [' . $currentVersion . ']');
@@ -65,6 +83,7 @@ class ChangeManager {
 		$available = $this->getAvailableSets();
 		$applied = $this->getAppliedSets();
 
+		$lastVersion = 0;
 		foreach ($available as $version => $changes) {
 			if (version_compare($version, $targetVersion) > 0) {
 				break;
@@ -84,8 +103,38 @@ class ChangeManager {
 			$this->output->notice('Updating current version to [' . $lastVersion . ']');
 			$this->processor->metaVersion('UPDATE _metaVersion SET currentVersion = ?', $lastVersion);
 		}
+	}
 
-		return $this;
+	protected function upgradeMeta() {
+		$applied = $this->getAppliedSets();
+		if (array_search('_metaVersion.isLocked', $applied) === false) {
+			$this->processor->upgradeMeta('ALTER TABLE _metaVersion ADD COLUMN isLocked BOOLEAN NOT NULL DEFAULT FALSE', 'Add lock capability');
+			$this->processor->metaChange('INSERT INTO _metaChange (name) VALUES (?)', '_metaVersion.isLocked');
+		}
+	}
+
+	protected function lockDatabase() {
+		$i = 0;
+		while (!$this->db->query('UPDATE _metaVersion SET isLocked = 1 WHERE isLocked = 0')->rowCount()) {
+			if ($i++ > 4) {
+				if ($this->output->prompt('Database still locked; Force database unlock and retry? [yN] ') === 'y') {
+					$this->unlockDatabase();
+					continue;
+				} else {
+					$this->output->notice('Lock wait timeout: canceling upgrade.');
+					return false;
+				}
+			}
+
+			$this->output->notice('Database is already locked; waiting for external process to finish. [' . pow(2, $i) * 0.25 . 's]');
+			usleep(250000 * pow(2, $i));
+		}
+
+		return true;
+	}
+
+	protected function unlockDatabase() {
+		return (bool)$this->db->query('UPDATE _metaVersion SET isLocked = 0')->rowCount();
 	}
 
 	protected function getCurrentVersion() {
