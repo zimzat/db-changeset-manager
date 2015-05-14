@@ -58,7 +58,7 @@ class ChangeManager {
 			if (!$this->lockDatabase()) {
 				return $this;
 			}
-		} catch (Exception $ex) {
+		} catch (\Exception $ex) {
 			// If the lock fails with an exception then the database /probably/ needs the lock meta upgrade;
 			$this->upgradeMeta();
 			if (!$this->lockDatabase()) {
