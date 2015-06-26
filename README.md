@@ -34,6 +34,12 @@ Directories must be prefixed with 'v' but otherwise follows the standard set out
 
 Files must be suffixed with `.sql` and must be uniquely named between all versions but otherwise can be named anything. A natural sort (2 before 10) is done to the list of files before being applied to the database.
 
+Restrictions
+====
+
+* No SELECT statements.
+* No CREATE DATABASE, DROP DATABASE, or USE DATABASE statements.
+
 Requirements
 ====
 
