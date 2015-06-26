@@ -116,7 +116,7 @@ class ChangeManager {
 	protected function lockDatabase() {
 		$i = 0;
 		while (!$this->db->query('UPDATE _metaVersion SET isLocked = 1 WHERE isLocked = 0')->rowCount()) {
-			if ($i++ > 4) {
+			if ($i++ > 3) {
 				if ($this->output->prompt('Database still locked; Force database unlock and retry? [yN] ') === 'y') {
 					$this->unlockDatabase();
 					continue;
