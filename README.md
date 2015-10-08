@@ -30,7 +30,7 @@ changesets
 
 Changes are applied to the database in order of version number and then sorted numerically by file name, thus upgrading from 1.0 to 1.3 would apply 'track-user-actions' before 'track-user-action-date' even though they're the same date prefix.
 
-Directories must be prefixed with 'v' but otherwise follows the standard set out by [version_compare()](http://php.net/version_compare).
+By default directories should be prefixed with 'v' however this can be changed or eliminated by specifying the `versionPrefix` in the db.ini. The versioning scheme should otherwise follow the standard set out by [version_compare()](http://php.net/version_compare).
 
 Files must be suffixed with `.sql` and must be uniquely named between all versions but otherwise can be named anything. A natural sort (2 before 10) is done to the list of files before being applied to the database.
 
@@ -72,6 +72,7 @@ dbname = test
 username = root
 ; password = secret
 changesetPath = changesets
+; versionPrefix = v
 ```
 
 The available commands, which can also be seen by running the command without any options, are:

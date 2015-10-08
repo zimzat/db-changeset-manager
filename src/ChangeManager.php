@@ -14,6 +14,8 @@ class ChangeManager {
 	/** @var Output */
 	protected $output;
 
+	protected $versionPrefix = 'v';
+
 	/**
 	 * @param string $changesetPath Path to directory containing version numbers.
 	 * @param \PDO $db
@@ -28,6 +30,11 @@ class ChangeManager {
 		if (!is_dir($this->changesetPath)) {
 			throw new \InvalidArgumentException('Invalid changeset path provided.');
 		}
+	}
+
+	public function setVersionPrefix($versionPrefix) {
+		$this->versionPrefix = $versionPrefix;
+		return $this;
 	}
 
 	public function init() {
@@ -92,7 +99,7 @@ class ChangeManager {
 			$unapplied = array_diff($changes, $applied);
 
 			if (!empty($unapplied)) {
-				$this->output->notice('Found unapplied changes in v' . $version);
+				$this->output->notice('Found unapplied changes in ' . $this->versionPrefix . $version);
 				$this->applyChanges($version, $unapplied);
 			}
 
@@ -110,6 +117,10 @@ class ChangeManager {
 		if (array_search('_metaVersion.isLocked', $applied) === false) {
 			$this->processor->upgradeMeta('ALTER TABLE _metaVersion ADD COLUMN isLocked BOOLEAN NOT NULL DEFAULT FALSE', 'Add lock capability');
 			$this->processor->metaChange('INSERT INTO _metaChange (name) VALUES (?)', '_metaVersion.isLocked');
+		}
+		if (array_search('_metaChange.nameLength', $applied) === false) {
+			$this->processor->upgradeMeta('ALTER TABLE _metaChange CHANGE COLUMN name name VARCHAR(128) NOT NULL', 'Increase changeset file length maximum from 64 to 128');
+			$this->processor->metaChange('INSERT INTO _metaChange (name) VALUES (?)', '_metaChange.nameLength');
 		}
 	}
 
@@ -149,9 +160,9 @@ class ChangeManager {
 		$pathPrefixLength = strlen($this->changesetPath);
 
 		$changes = [];
-		foreach (glob($this->changesetPath . '/*/*.sql') as $path) {
+		foreach (glob($this->changesetPath . '/' . $this->versionPrefix . '*/*.sql') as $path) {
 			list($tmp, $version, $file) = explode(DIRECTORY_SEPARATOR, substr($path, $pathPrefixLength));
-			$changes[ltrim($version, 'v')][] = $file;
+			$changes[substr_replace($version, '', 0, strlen($this->versionPrefix))][] = $file;
 		}
 
 		foreach ($changes as &$files) {
@@ -164,8 +175,8 @@ class ChangeManager {
 
 	protected function applyChanges($version, $changes) {
 		foreach ($changes as $file) {
-			$this->output->notice('Applying changeset: v' . $version . '/' . $file);
-			$this->processor->applyFile($this->changesetPath . '/v' . $version . '/' . $file);
+			$this->output->notice('Applying changeset: ' . $this->versionPrefix . $version . '/' . $file);
+			$this->processor->applyFile($this->changesetPath . '/' . $this->versionPrefix . $version . '/' . $file);
 			$this->processor->metaChange('INSERT INTO _metaChange (name) VALUES (?)', $file);
 		}
 	}

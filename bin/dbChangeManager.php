@@ -77,7 +77,7 @@ $db = new \PDO(
 );
 $output = new \DbVcs\Output();
 
-if (isset($opts['n'])) {
+if (isset($opts['n']) || isset($opts['s'])) {
 	$processor = new \DbVcs\Processor\NoOp();
 } elseif (isset($opts['i'])) {
 	$processor = new \DbVcs\Processor\Interactive($db, $output);
@@ -92,6 +92,9 @@ if (isset($opts['n'])) {
 }
 
 $changeManager = new \DbVcs\ChangeManager(realpath($config['changesetPath']), $db, $processor, $output);
+if (array_key_exists('versionPrefix', $config)) {
+	$changeManager->setVersionPrefix($config['versionPrefix']);
+}
 
 if (isset($opts['s'])) {
 	$changeManager->showState();

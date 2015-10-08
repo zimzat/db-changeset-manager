@@ -8,9 +8,10 @@ INSERT INTO _metaVersion SET currentVersion = '0';
 
 CREATE TABLE IF NOT EXISTS _metaChange (
 	metaChangeId INTEGER UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
-	name VARCHAR(64) NOT NULL,
+	name VARCHAR(128) NOT NULL,
 	dateApplied TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	UNIQUE INDEX `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 INSERT INTO _metaChange (name) VALUES ('_metaVersion.isLocked');
+INSERT INTO _metaChange (name) VALUES ('_metaChange.nameLength');

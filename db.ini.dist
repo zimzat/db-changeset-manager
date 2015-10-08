@@ -4,3 +4,4 @@ dbname = test
 username = root
 ; password = secret
 changesetPath = changesets
+; versionPrefix = v
